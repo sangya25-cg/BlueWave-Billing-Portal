@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.37411.7 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlueWave-BP.API", "BlueWave-BP.API\BlueWave-BP.API.csproj", "{1B319E0A-8DB1-4D18-8C95-34AF18031655}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1B319E0A-8DB1-4D18-8C95-34AF18031655}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1B319E0A-8DB1-4D18-8C95-34AF18031655}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1B319E0A-8DB1-4D18-8C95-34AF18031655}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1B319E0A-8DB1-4D18-8C95-34AF18031655}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {4D8FC464-FB81-489F-86A6-A77B0A767046}
+	EndGlobalSection
+EndGlobal
