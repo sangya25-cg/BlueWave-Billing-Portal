@@ -2,6 +2,7 @@
 using BlueWave_BP.API.DTOs;
 using BlueWave_BP.API.Models;
 using BlueWave_BP.API.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace BlueWave_BP.API.Services.Implementation
 {
@@ -33,6 +34,10 @@ namespace BlueWave_BP.API.Services.Implementation
 
             await _context.Buyers.AddAsync(buyer);
             await _context.SaveChangesAsync();
+        }
+        public async Task<List<Buyer>> GetAllBuyersAsync()
+        {
+            return await _context.Buyers.ToListAsync();
         }
     }
 }

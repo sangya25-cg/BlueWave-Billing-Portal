@@ -22,5 +22,13 @@ namespace BlueWave_BP.API.Controllers
 
             return Ok("Buyer created successfully.");
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAllBuyers()
+        {
+            var buyers = await _buyerService.GetAllBuyersAsync();
+
+            return Ok(buyers);
+        }
     }
 }
