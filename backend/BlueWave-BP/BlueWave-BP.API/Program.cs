@@ -142,18 +142,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// Skip HTTPS redirection on Render (load balancer handles it)
-if (!app.Environment.IsProduction())
-{
-    app.UseHttpsRedirection();
-}
-
 app.UseCors("ReactPolicy");
 
 // Health check endpoint
 app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }))
     .WithName("HealthCheck")
-    .WithOpenApi()
     .AllowAnonymous();
 
 app.UseAuthorization();
