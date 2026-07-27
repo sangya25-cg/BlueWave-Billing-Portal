@@ -1,9 +1,32 @@
 using BlueWave_BP.API.Data;
+using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
 using BlueWave_BP.API.Services.Interfaces;
 using BlueWave_BP.API.Services.Implementation;
 
+var aspNetEnvironment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+var isDevelopmentEnvironment = string.Equals(
+    aspNetEnvironment,
+    Environments.Development,
+    StringComparison.OrdinalIgnoreCase);
+
+if (!isDevelopmentEnvironment)
+{
+    // Render (and other hosts) should set env vars directly; .env is a local fallback for non-development runs.
+    var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
+    if (File.Exists(envPath))
+    {
+        Env.Load(envPath);
+    }
+}
+
 var builder = WebApplication.CreateBuilder(args);
+
+var renderPort = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrWhiteSpace(renderPort))
+{
+    builder.WebHost.UseUrls($"http://*:{renderPort}");
+}
 
 // Add services to the container.
 
@@ -11,10 +34,17 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException(
+        "Connection string 'DefaultConnection' is not configured. Use appsettings.Development.json locally or set ConnectionStrings__DefaultConnection in environment variables/.env.");
+}
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection"));
+    options.UseSqlServer(connectionString);
 });
 builder.Services.AddScoped<IBuyerService, BuyerService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
@@ -22,12 +52,17 @@ builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IBuyerProductPriceService, BuyerProductPriceService>();
 builder.Services.AddScoped<IInvoiceService, InvoiceService>();
 
+var configuredCorsOrigins = builder.Configuration["Cors:AllowedOrigins"];
+var fallbackCorsOrigins = "http://localhost:5173";
+var parsedOrigins = (configuredCorsOrigins ?? fallbackCorsOrigins)
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("ReactPolicy",
         policy =>
         {
-            policy.WithOrigins("http://localhost:5173")
+            policy.WithOrigins(parsedOrigins)
                   .AllowAnyHeader()
                   .AllowAnyMethod();
         });
