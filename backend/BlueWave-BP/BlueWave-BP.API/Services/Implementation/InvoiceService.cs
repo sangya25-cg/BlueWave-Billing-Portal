@@ -18,6 +18,9 @@ namespace BlueWave_BP.API.Services.Implementation
         public async Task<InvoiceResponseDto> CreateInvoiceAsync(
             CreateInvoiceDto invoiceDto)
         {
+            var gstRatePercent = invoiceDto.GstRate <= 0 ? 5m : invoiceDto.GstRate;
+            var gstRateDecimal = gstRatePercent / 100m;
+
             var invoiceCount = await _context.Invoices.CountAsync();
 
             var invoiceNumber =
@@ -63,7 +66,7 @@ namespace BlueWave_BP.API.Services.Implementation
 
                 var amount = finalRate * item.Qty;
 
-                var gst = amount * 0.05m;
+                var gst = amount * gstRateDecimal;
 
                 var total = amount + gst;
 
@@ -79,7 +82,7 @@ namespace BlueWave_BP.API.Services.Implementation
 
                     Amount = amount,
 
-                    GstRate = 5,
+                    GstRate = gstRatePercent,
 
                     GstAmount = gst,
 
@@ -119,6 +122,26 @@ namespace BlueWave_BP.API.Services.Implementation
 
                 TotalAmount = invoice.TotalAmount
             };
+        }
+
+        public async Task<List<InvoiceListItemDto>> GetAllInvoicesAsync()
+        {
+            return await _context.Invoices
+                .Join(
+                    _context.Buyers,
+                    invoice => invoice.BuyerId,
+                    buyer => buyer.Id,
+                    (invoice, buyer) => new InvoiceListItemDto
+                    {
+                        InvoiceId = invoice.Id,
+                        InvoiceNo = invoice.InvoiceNo,
+                        BuyerName = buyer.PartyName,
+                        InvoiceDate = invoice.InvoiceDate,
+                        TotalAmount = invoice.TotalAmount,
+                        Status = invoice.Status ?? string.Empty
+                    })
+                .OrderByDescending(x => x.InvoiceId)
+                .ToListAsync();
         }
     }
 }

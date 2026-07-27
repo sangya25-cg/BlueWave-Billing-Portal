@@ -24,5 +24,13 @@ namespace BlueWave_BP.API.Controllers
 
             return Ok(response);
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAllInvoices()
+        {
+            var invoices = await _invoiceService.GetAllInvoicesAsync();
+
+            return Ok(invoices);
+        }
     }
 }

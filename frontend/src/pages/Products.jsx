@@ -12,6 +12,7 @@ function Products() {
   const navigate = useNavigate();
   const buyerId = location.state?.buyerId;
   const buyerName = location.state?.buyerName || "";
+  const gstRate = Number(location.state?.gstRate ?? 5);
 
   useEffect(() => {
     if (!buyerId) {
@@ -40,8 +41,16 @@ function Products() {
     }));
   };
 
+  const setQty = (productId, value) => {
+    const nextValue = Number(value);
+    setQuantities((prev) => ({
+      ...prev,
+      [productId]: Number.isFinite(nextValue) && nextValue >= 1 ? Math.floor(nextValue) : value === "" ? "" : 1,
+    }));
+  };
+
   const addProduct = (product) => {
-    const qty = quantities[product.productId] || 1;
+    const qty = Number(quantities[product.productId]) || 1;
     setSelectedItems((prev) => ({
       ...prev,
       [product.productId]: {
@@ -64,7 +73,7 @@ function Products() {
 
   const selectedList = Object.values(selectedItems);
   const subtotal = selectedList.reduce((sum, item) => sum + item.rate * item.qty, 0);
-  const gst = subtotal * 0.05;
+  const gst = subtotal * (gstRate / 100);
   const total = subtotal + gst;
 
   const proceedToCheckout = () => {
@@ -73,7 +82,7 @@ function Products() {
       return;
     }
     navigate("/checkout", {
-      state: { buyerId, buyerName, cart: selectedList },
+      state: { buyerId, buyerName, cart: selectedList, gstRate },
     });
   };
 
@@ -138,9 +147,13 @@ function Products() {
                     >
                       −
                     </button>
-                    <span className="w-8 text-center font-semibold text-slate-800 text-sm">
-                      {quantities[product.productId] || 1}
-                    </span>
+                    <input
+                      type="number"
+                      min="1"
+                      value={quantities[product.productId] ?? 1}
+                      onChange={(e) => setQty(product.productId, e.target.value)}
+                      className="w-14 h-8 text-center border border-slate-300 rounded-md text-sm font-semibold text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
                     <button
                       onClick={() => changeQty(product.productId, 1)}
                       className="w-8 h-8 rounded-md border border-slate-300 text-slate-600 hover:bg-slate-100 font-bold transition-colors flex items-center justify-center text-lg leading-none"
@@ -207,7 +220,7 @@ function Products() {
                     <span>₹ {subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-xs text-slate-500">
-                    <span>GST (5%)</span>
+                    <span>GST ({gstRate}%)</span>
                     <span>₹ {gst.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between font-bold text-slate-900 text-sm pt-1.5 border-t border-slate-100">

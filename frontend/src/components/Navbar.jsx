@@ -35,6 +35,13 @@ function Navbar() {
           >
             Add Product
           </button>
+
+          <button
+            onClick={() => navigate("/invoices")}
+            className="hover:text-blue-300 transition-colors"
+          >
+            Invoices
+          </button>
         </div>
       </div>
     </nav>

@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { createInvoice } from "../services/invoiceService";
 import { getAllBuyers } from "../services/buyerService";
 import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
 import signature from "../assets/signature.png";
 import logo from "../assets/bluewave-logo.png";
 
@@ -15,6 +14,7 @@ function Invoice() {
   const buyerId = location.state?.buyerId;
   const buyerName = location.state?.buyerName || "N/A";
   const cart = location.state?.cart || [];
+  const gstRateValue = Number(location.state?.gstRate ?? 5);
   const [buyerInfo, setBuyerInfo] = useState(null);
 
   const [savedInvoice, setSavedInvoice] = useState(null);
@@ -22,7 +22,7 @@ function Invoice() {
   const [hideSignature, setHideSignature] = useState(false);
 
   const subtotal = cart.reduce((sum, item) => sum + item.rate * item.qty, 0);
-  const gstRate = 0.05;
+  const gstRate = gstRateValue / 100;
   const gst = subtotal * gstRate;
   const cgst = gst / 2;
   const sgst = gst / 2;
@@ -50,12 +50,258 @@ function Invoice() {
     year: "numeric",
   });
 
+  const formatMoney = (value) => Number(value || 0).toFixed(2);
+
+  const cleanFieldValue = (value, prefixToTrim = "") => {
+    const rawValue = String(value || "").trim();
+    if (!rawValue) {
+      return "NA";
+    }
+
+    if (!prefixToTrim) {
+      return rawValue.replace(/\s+/g, " ");
+    }
+
+    const prefixPattern = new RegExp(`^${prefixToTrim}\\s*:?\\s*`, "i");
+    return rawValue.replace(prefixPattern, "").replace(/\s+/g, " ");
+  };
+
+  const loadImageAsDataUrl = async (imageUrl) => {
+    const response = await fetch(imageUrl);
+    const blob = await response.blob();
+
+    return await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  };
+
+  const renderInvoicePdf = async () => {
+    const pdf = new jsPDF("p", "mm", "a4");
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const margin = 8;
+    const contentWidth = pageWidth - margin * 2;
+    const logoData = await loadImageAsDataUrl(logo);
+    const signatureData = await loadImageAsDataUrl(signature);
+
+    let y = margin;
+
+    const drawText = (text, x, yPos, options = {}) => {
+      const {
+        size = 8,
+        style = "normal",
+        align = "left",
+        color = [0, 0, 0],
+      } = options;
+
+      pdf.setFont("helvetica", style);
+      pdf.setFontSize(size);
+      pdf.setTextColor(color[0], color[1], color[2]);
+      pdf.text(String(text), x, yPos, { align });
+    };
+
+    const drawCellText = (text, x, yPos, width, options = {}) => {
+      const lines = pdf.splitTextToSize(String(text ?? ""), width);
+      lines.forEach((line, index) => {
+        drawText(line, x, yPos + index * 3.5, options);
+      });
+      return lines.length;
+    };
+
+    const drawWrappedLines = (lines, x, startY, options = {}) => {
+      const { lineHeight = 3.8, size = 7, style = "normal", align = "left" } = options;
+      lines.forEach((line, index) => {
+        drawText(line, x, startY + index * lineHeight, { size, style, align });
+      });
+    };
+
+    pdf.setDrawColor(0, 0, 0);
+    pdf.setLineWidth(0.2);
+    pdf.rect(margin, margin, contentWidth, pageHeight - margin * 2);
+
+    pdf.rect(margin, y, contentWidth, 24);
+    pdf.line(margin + 42, y, margin + 42, y + 24);
+    pdf.line(margin + 42 + 82, y, margin + 42 + 82, y + 24);
+
+    pdf.addImage(logoData, "PNG", margin + 2, y + 2, 24, 10);
+    drawText("Sanitary Equipment Supplier", margin + 2, y + 15, { size: 7 });
+    drawText("GSTIN: 27AABCU0000A1Z5", margin + 2, y + 18.5, { size: 7 });
+    drawText("Pune, Maharashtra", margin + 2, y + 22, { size: 7 });
+
+    drawText("TAX INVOICE", margin + 42 + 41, y + 5, { size: 7, align: "center" });
+    drawText("BLUEWAVE", margin + 42 + 41, y + 12, { size: 16, style: "bold", align: "center", color: [29, 78, 216] });
+    drawText("BATHROOM FITTINGS | SHOWERS | BASINS | DRAIN COVERS", margin + 42 + 41, y + 17, { size: 6.5, align: "center" });
+    drawText("A-11, Industrial Estate, Pune - 411001, Maharashtra", margin + 42 + 41, y + 21, { size: 6.5, align: "center" });
+
+    drawText("Mob: +91-9000000000", margin + 42 + 84, y + 6, { size: 7 });
+    drawText("State: Maharashtra", margin + 42 + 84, y + 10, { size: 7 });
+    drawText("State Code: 27", margin + 42 + 84, y + 14, { size: 7 });
+
+    y += 24;
+
+    pdf.rect(margin, y, contentWidth, 8);
+    pdf.line(margin + 70, y, margin + 70, y + 8);
+    pdf.line(margin + 120, y, margin + 120, y + 8);
+    drawText(`GSTIN: ${buyerInfo?.gstin || "NA"}`, margin + 2, y + 5, { size: 7 });
+    drawText("HSN/SAC: 8481 / 3925", margin + 72, y + 5, { size: 7 });
+    drawText("Original / Duplicate", margin + 122, y + 5, { size: 7 });
+
+    y += 8;
+
+    const receiverLeftWidth = 110;
+    const receiverRightWidth = contentWidth - receiverLeftWidth;
+    const addressValue = cleanFieldValue(buyerInfo?.billingAddress, "address");
+    const cityValue = cleanFieldValue(buyerInfo?.city);
+    const stateValue = cleanFieldValue(buyerInfo?.state);
+    const mobileValue = cleanFieldValue(buyerInfo?.mobile);
+
+    const receiverLeftLines = [
+      "Details of Receiver / Billed To",
+      ...pdf.splitTextToSize(`Name: ${cleanFieldValue(buyerName)}`, receiverLeftWidth - 4),
+      ...pdf.splitTextToSize(`Address: ${addressValue}`, receiverLeftWidth - 4),
+      ...pdf.splitTextToSize(`City: ${cityValue}`, receiverLeftWidth - 4),
+      ...pdf.splitTextToSize(`State: ${stateValue}`, receiverLeftWidth - 4),
+      ...pdf.splitTextToSize(`Mobile: ${mobileValue}`, receiverLeftWidth - 4),
+    ];
+
+    const receiverRightLines = [
+      `Invoice No: ${savedInvoice?.invoiceNo || "Draft"}`,
+      `Date: ${today}`,
+      `Place of Supply: ${stateValue === "NA" ? "Maharashtra" : stateValue}`,
+      "Payment Type: Cash/Credit",
+    ];
+
+    const receiverLineHeight = 3.8;
+    const receiverHeight = Math.max(
+      24,
+      Math.max(receiverLeftLines.length, receiverRightLines.length) * receiverLineHeight + 6
+    );
+
+    pdf.rect(margin, y, contentWidth, receiverHeight);
+    pdf.line(margin + receiverLeftWidth, y, margin + receiverLeftWidth, y + receiverHeight);
+    drawText(receiverLeftLines[0], margin + 2, y + 4.5, { size: 7, style: "bold" });
+    drawWrappedLines(receiverLeftLines.slice(1), margin + 2, y + 8.5, { size: 7, lineHeight: receiverLineHeight });
+    drawWrappedLines(receiverRightLines, margin + receiverLeftWidth + 2, y + 4.5, { size: 7, lineHeight: receiverLineHeight });
+
+    y += receiverHeight;
+
+    const colWidths = [10, 54, 14, 12, 18, 22, 18, 18, 22];
+    const colX = [];
+    let cursorX = margin;
+    colWidths.forEach((width) => {
+      colX.push(cursorX);
+      cursorX += width;
+    });
+
+    const drawRow = (rowY, rowHeight) => {
+      pdf.rect(margin, rowY, contentWidth, rowHeight);
+      for (let i = 1; i < colX.length; i++) {
+        pdf.line(colX[i], rowY, colX[i], rowY + rowHeight);
+      }
+    };
+
+    drawRow(y, 10);
+    const headers = ["No.", "Name of Product / HSN", "GST %", "Qty", "Rate", "Taxable Value", "CGST", "SGST", "Amount"];
+    headers.forEach((header, index) => {
+      drawCellText(header, colX[index] + 1.5, y + 4.5, colWidths[index] - 3, { size: 6.5, style: "bold" });
+    });
+
+    y += 10;
+
+    const paddedCart = [...cart];
+    while (paddedCart.length < 8) {
+      paddedCart.push(null);
+    }
+
+    paddedCart.forEach((item, index) => {
+      const rowHeight = item ? 10 : 9;
+      drawRow(y, rowHeight);
+
+      if (item) {
+        const amount = item.rate * item.qty;
+        const itemCgst = amount * (gstRate / 2);
+        const itemSgst = amount * (gstRate / 2);
+        const lineTotal = amount + itemCgst + itemSgst;
+
+        drawText(index + 1, colX[0] + 1.5, y + 5.5, { size: 6.5 });
+        drawCellText(`${item.productName}\nHSN: 8481`, colX[1] + 1.5, y + 3.6, colWidths[1] - 3, { size: 6.5 });
+        drawText(`${gstRateValue}%`, colX[2] + colWidths[2] / 2, y + 5.5, { size: 6.5, align: "center" });
+        drawText(item.qty, colX[3] + colWidths[3] / 2, y + 5.5, { size: 6.5, align: "center" });
+        drawText(formatMoney(item.rate), colX[4] + colWidths[4] - 1.5, y + 5.5, { size: 6.5, align: "right" });
+        drawText(formatMoney(amount), colX[5] + colWidths[5] - 1.5, y + 5.5, { size: 6.5, align: "right" });
+        drawText(formatMoney(itemCgst), colX[6] + colWidths[6] - 1.5, y + 5.5, { size: 6.5, align: "right" });
+        drawText(formatMoney(itemSgst), colX[7] + colWidths[7] - 1.5, y + 5.5, { size: 6.5, align: "right" });
+        drawText(formatMoney(lineTotal), colX[8] + colWidths[8] - 1.5, y + 5.5, { size: 6.5, align: "right" });
+      }
+
+      y += rowHeight;
+    });
+
+    const summaryTop = y;
+    const leftWidth = 122;
+    const rightWidth = contentWidth - leftWidth;
+    const bankDetailsLines = [
+      "Bank Details",
+      "Name: BLUEWAVE",
+      "A/C No: 0000123456789",
+      "IFSC: HDFC0001234",
+      "Branch: Pune Main",
+      "Terms & Conditions",
+      "1. Goods once sold will not be taken back.",
+      "2. Interest @18% p.a. will be charged on overdue bills.",
+      "3. Subject to Pune jurisdiction.",
+    ];
+    const summaryHeight = Math.max(44, bankDetailsLines.length * 3.8 + 8);
+
+    pdf.rect(margin, summaryTop, leftWidth, summaryHeight);
+    pdf.rect(margin + leftWidth, summaryTop, rightWidth, summaryHeight);
+
+    drawText(bankDetailsLines[0], margin + 2, summaryTop + 4.5, { size: 7, style: "bold" });
+    drawWrappedLines(bankDetailsLines.slice(1, 5), margin + 2, summaryTop + 8.5, { size: 6.5, lineHeight: 3.8 });
+    drawText(bankDetailsLines[5], margin + 2, summaryTop + 24.5, { size: 7, style: "bold" });
+    drawWrappedLines(bankDetailsLines.slice(6), margin + 2, summaryTop + 28.5, { size: 6.2, lineHeight: 3.8 });
+
+    const totals = [
+      ["Total Taxable Value", formatMoney(subtotal)],
+      ["ADD CGST", formatMoney(cgst)],
+      ["ADD SGST", formatMoney(sgst)],
+      ["Total Amount", formatMoney(total)],
+      ["Any Other Charges", "0.00"],
+      ["TOTAL INVOICE", formatMoney(total)],
+    ];
+
+    const rowHeight = summaryHeight / totals.length;
+    totals.forEach((row, index) => {
+      const rowY = summaryTop + index * rowHeight;
+      if (index > 0) {
+        pdf.line(margin + leftWidth, rowY, margin + leftWidth + rightWidth, rowY);
+      }
+      pdf.line(margin + leftWidth + rightWidth - 24, rowY, margin + leftWidth + rightWidth - 24, rowY + rowHeight);
+      drawText(row[0], margin + leftWidth + 2, rowY + 4.5, { size: 6.5, style: index === totals.length - 1 || index === 0 || index === 3 ? "bold" : "normal" });
+      drawText(row[1], margin + leftWidth + rightWidth - 2, rowY + 4.5, { size: 6.5, align: "right", style: index === totals.length - 1 || index === 0 || index === 3 ? "bold" : "normal" });
+    });
+
+    y += summaryHeight;
+
+    pdf.rect(margin, y, contentWidth, 20);
+    pdf.line(margin + 122, y, margin + 122, y + 20);
+    drawText("Customer Seal", margin + 2, y + 16, { size: 7 });
+    pdf.addImage(signatureData, "PNG", margin + 137, y + 2, 28, 10);
+    drawText("Authorized Signatory", margin + 144, y + 16, { size: 7, style: "bold", align: "center" });
+
+    return pdf;
+  };
+
   const handleSave = async () => {
     if (savedInvoice || saving) return;
     setSaving(true);
     try {
       const invoicePayload = {
         buyerId,
+        gstRate: gstRateValue,
         items: cart.map((item) => ({
           productId: item.productId,
           qty: item.qty,
@@ -80,36 +326,20 @@ function Invoice() {
   };
 
   const handleDownloadWithSignature = async () => {
-    if (!invoiceRef.current) {
-      alert("Failed to download. Please try again.");
-      return;
-    }
-
-    setHideSignature(false);
-    await new Promise((r) => setTimeout(r, 150));
     try {
-      const canvas = await html2canvas(invoiceRef.current, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: "#ffffff",
-      });
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("p", "mm", "a4");
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = pageWidth;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      pdf.addImage(
-        imgData,
-        "PNG",
-        0,
-        0,
-        imgWidth,
-        Math.min(imgHeight, pageHeight)
-      );
+      const pdf = await renderInvoicePdf();
+      const blob = pdf.output("blob");
+      const blobUrl = URL.createObjectURL(blob);
       const safeBuyerName = String(buyerName).replace(/[^a-zA-Z0-9-_ ]/g, "").trim() || "Buyer";
       const filename = `Invoice_${savedInvoice?.invoiceNo || "Draft"}_${safeBuyerName}.pdf`;
-      pdf.save(filename);
+
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
     } catch (err) {
       console.error(err);
       alert("Failed to download. Please try again.");
@@ -278,7 +508,7 @@ function Invoice() {
                     <tr key={`${item.productId}-${index}`}>
                       <td className="border-r border-black p-1 align-top">{index + 1}</td>
                       <td className="border-r border-black p-1 align-top">{item.productName}<br />HSN: 8481</td>
-                      <td className="border-r border-black p-1 text-center align-top">5%</td>
+                      <td className="border-r border-black p-1 text-center align-top">{gstRateValue}%</td>
                       <td className="border-r border-black p-1 text-center align-top">{item.qty}</td>
                       <td className="border-r border-black p-1 text-right align-top">{Number(item.rate).toFixed(2)}</td>
                       <td className="border-r border-black p-1 text-right align-top">{amount.toFixed(2)}</td>

@@ -8,3 +8,8 @@ export const createInvoice = async (invoiceData) => {
 
   return response.data;
 };
+
+export const getAllInvoices = async () => {
+  const response = await api.get("/Invoice");
+  return response.data;
+};

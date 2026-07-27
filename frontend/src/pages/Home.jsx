@@ -6,6 +6,7 @@ import Navbar from "../components/Navbar";
 function Home() {
   const [buyers, setBuyers] = useState([]);
   const [selectedBuyer, setSelectedBuyer] = useState("");
+  const [gstRate, setGstRate] = useState("5");
 
   const navigate = useNavigate();
 
@@ -29,10 +30,13 @@ function Home() {
     }
 
     const buyer = buyers.find((b) => String(b.id) === String(selectedBuyer));
+    const parsedGstRate = Number(gstRate);
+
     navigate("/products", {
       state: {
         buyerId: selectedBuyer,
         buyerName: buyer?.partyName || "",
+        gstRate: Number.isFinite(parsedGstRate) && parsedGstRate >= 0 ? parsedGstRate : 5,
       },
     });
   };
@@ -67,7 +71,14 @@ function Home() {
               </div>
 
               <div className="bg-white rounded-xl shadow p-4 text-center border border-slate-100">
-                <h3 className="text-2xl font-bold text-blue-700">5%</h3>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={gstRate}
+                  onChange={(e) => setGstRate(e.target.value)}
+                  className="w-20 mx-auto text-center text-2xl font-bold text-blue-700 bg-transparent border-b border-slate-300 focus:outline-none focus:border-blue-700"
+                />
                 <p className="text-sm text-gray-500 mt-1">GST</p>
               </div>
             </div>

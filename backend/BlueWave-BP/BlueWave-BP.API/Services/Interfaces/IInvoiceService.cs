@@ -5,5 +5,7 @@ namespace BlueWave_BP.API.Services.Interfaces
     public interface IInvoiceService
     {
         Task<InvoiceResponseDto> CreateInvoiceAsync(CreateInvoiceDto invoiceDto);
+
+        Task<List<InvoiceListItemDto>> GetAllInvoicesAsync();
     }
 }

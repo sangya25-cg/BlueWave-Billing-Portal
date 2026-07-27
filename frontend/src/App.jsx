@@ -6,6 +6,7 @@ import Checkout from "./pages/Checkout";
 import Invoice from "./pages/Invoice";
 import AddBuyer from "./pages/AddBuyer";
 import AddProduct from "./pages/AddProduct";
+import Invoices from "./pages/Invoices";
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         <Route path="/products" element={<Products />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/invoice" element={<Invoice />} />
+        <Route path="/invoices" element={<Invoices />} />
         <Route path="/add-buyer" element={<AddBuyer />} />
         <Route path="/add-product" element={<AddProduct />} />
       </Routes>

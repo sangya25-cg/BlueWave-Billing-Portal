@@ -7,14 +7,15 @@ function Checkout() {
   const buyerId = location.state?.buyerId;
   const buyerName = location.state?.buyerName || "";
   const cart = location.state?.cart || [];
+  const gstRate = Number(location.state?.gstRate ?? 5);
 
   const subtotal = cart.reduce((sum, item) => sum + item.rate * item.qty, 0);
-  const gst = subtotal * 0.05;
+  const gst = subtotal * (gstRate / 100);
   const total = subtotal + gst;
 
   const handleGenerateInvoice = () => {
     navigate("/invoice", {
-      state: { buyerId, buyerName, cart },
+      state: { buyerId, buyerName, cart, gstRate },
     });
   };
 
@@ -76,7 +77,7 @@ function Checkout() {
               </div>
 
               <div className="flex justify-between text-slate-600">
-                <span>GST (5%)</span>
+                <span>GST ({gstRate}%)</span>
                 <span>₹ {gst.toFixed(2)}</span>
               </div>
 
