@@ -22,6 +22,9 @@ if (!isDevelopmentEnvironment)
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Disable configuration file watching to prevent inotify limit errors on Render
+builder.Configuration.Sources.OfType<FileConfigurationSource>().ForEach(source => source.ReloadOnChange = false);
+
 var renderPort = Environment.GetEnvironmentVariable("PORT");
 if (!string.IsNullOrWhiteSpace(renderPort))
 {
