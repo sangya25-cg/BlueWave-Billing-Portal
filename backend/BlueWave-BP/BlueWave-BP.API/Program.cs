@@ -56,13 +56,42 @@ var configuredCorsOrigins = builder.Configuration["Cors:AllowedOrigins"];
 var fallbackCorsOrigins = "http://localhost:5173";
 var parsedOrigins = (configuredCorsOrigins ?? fallbackCorsOrigins)
     .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+var isDevelopment = builder.Environment.IsDevelopment();
+var allowVercelPreviewOrigins = builder.Configuration.GetValue<bool>("Cors:AllowVercelPreviewOrigins");
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("ReactPolicy",
         policy =>
         {
-            policy.WithOrigins(parsedOrigins)
+            policy.SetIsOriginAllowed(origin =>
+                  {
+                      if (string.IsNullOrWhiteSpace(origin))
+                      {
+                          return false;
+                      }
+
+                      var normalizedOrigin = origin.TrimEnd('/');
+                      var normalizedConfiguredOrigins = parsedOrigins
+                          .Select(value => value.TrimEnd('/'));
+
+                      if (normalizedConfiguredOrigins.Contains(normalizedOrigin, StringComparer.OrdinalIgnoreCase))
+                      {
+                          return true;
+                      }
+
+                      if (isDevelopment && Uri.TryCreate(origin, UriKind.Absolute, out var uri))
+                      {
+                          return string.Equals(uri.Host, "localhost", StringComparison.OrdinalIgnoreCase);
+                      }
+
+                      if (allowVercelPreviewOrigins && Uri.TryCreate(origin, UriKind.Absolute, out var previewUri))
+                      {
+                          return previewUri.Host.EndsWith(".vercel.app", StringComparison.OrdinalIgnoreCase);
+                      }
+
+                      return false;
+                  })
                   .AllowAnyHeader()
                   .AllowAnyMethod();
         });
