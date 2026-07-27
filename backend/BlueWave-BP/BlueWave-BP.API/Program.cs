@@ -119,6 +119,22 @@ if (shouldReseedSanitaryData)
     return;
 }
 
+// Apply database migrations automatically on startup
+try
+{
+    using (var scope = app.Services.CreateScope())
+    {
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        await dbContext.Database.MigrateAsync();
+    }
+}
+catch (Exception ex)
+{
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    logger.LogError(ex, "An error occurred while migrating the database.");
+    throw;
+}
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -126,9 +142,19 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// Skip HTTPS redirection on Render (load balancer handles it)
+if (!app.Environment.IsProduction())
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseCors("ReactPolicy");
+
+// Health check endpoint
+app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }))
+    .WithName("HealthCheck")
+    .WithOpenApi()
+    .AllowAnonymous();
 
 app.UseAuthorization();
 
