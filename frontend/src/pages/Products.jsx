@@ -5,15 +5,15 @@ import Navbar from "../components/Navbar";
 
 function Products() {
   const [products, setProducts] = useState([]);
-  const [cart, setCart] = useState([]);
+  const [selectedItems, setSelectedItems] = useState({});
   const [quantities, setQuantities] = useState({});
 
   const location = useLocation();
   const navigate = useNavigate();
   const buyerId = location.state?.buyerId;
+  const buyerName = location.state?.buyerName || "";
 
   useEffect(() => {
-    // If no buyer selected, send back to home
     if (!buyerId) {
       navigate("/");
       return;
@@ -25,136 +25,209 @@ function Products() {
     try {
       const data = await getAllProductsWithPrice(buyerId);
       setProducts(data);
-    } catch (error) {
-      console.error(error);
+      const initQty = {};
+      data.forEach((p) => { initQty[p.productId] = 1; });
+      setQuantities(initQty);
+    } catch (err) {
+      console.error(err);
     }
   };
 
-  const handleQuantityChange = (productId, value) => {
-    setQuantities({ ...quantities, [productId]: value });
+  const changeQty = (productId, delta) => {
+    setQuantities((prev) => ({
+      ...prev,
+      [productId]: Math.max(1, (prev[productId] || 1) + delta),
+    }));
   };
 
-  const addToCart = (product) => {
-    const qty = parseInt(quantities[product.productId] || 1);
-
-    if (isNaN(qty) || qty < 1) {
-      alert("Please enter a valid quantity.");
-      return;
-    }
-
-    // If product already in cart, just increase the quantity
-    const existingIndex = cart.findIndex(
-      (item) => item.productId === product.productId
-    );
-
-    if (existingIndex !== -1) {
-      const updatedCart = [...cart];
-      updatedCart[existingIndex].qty += qty;
-      setCart(updatedCart);
-    } else {
-      setCart([
-        ...cart,
-        {
-          productId: product.productId,
-          productName: product.productName,
-          rate: product.rate,
-          qty,
-        },
-      ]);
-    }
-
-    // Reset qty input for this product after adding
-    setQuantities({ ...quantities, [product.productId]: "" });
+  const addProduct = (product) => {
+    const qty = quantities[product.productId] || 1;
+    setSelectedItems((prev) => ({
+      ...prev,
+      [product.productId]: {
+        productId: product.productId,
+        productName: product.productName,
+        rate: product.rate,
+        qty: (prev[product.productId]?.qty || 0) + qty,
+        hasCustomPrice: product.hasCustomPrice,
+      },
+    }));
   };
 
-  const proceedToCheckout = () => {
-    if (cart.length === 0) {
-      alert("Please add at least one product.");
-      return;
-    }
-
-    navigate("/checkout", {
-      state: { buyerId, cart },
+  const removeItem = (productId) => {
+    setSelectedItems((prev) => {
+      const next = { ...prev };
+      delete next[productId];
+      return next;
     });
   };
 
-  const totalCartItems = cart.reduce((sum, item) => sum + item.qty, 0);
+  const selectedList = Object.values(selectedItems);
+  const subtotal = selectedList.reduce((sum, item) => sum + item.rate * item.qty, 0);
+  const gst = subtotal * 0.05;
+  const total = subtotal + gst;
+
+  const proceedToCheckout = () => {
+    if (selectedList.length === 0) {
+      alert("Please add at least one product.");
+      return;
+    }
+    navigate("/checkout", {
+      state: { buyerId, buyerName, cart: selectedList },
+    });
+  };
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col">
       <Navbar />
 
-      <div className="max-w-7xl mx-auto px-8 py-10 w-full flex-1">
+      <div className="max-w-7xl mx-auto px-8 py-8 w-full flex-1">
 
-        {/* Page Header */}
-        <div className="flex justify-between items-start mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900">Select Products</h1>
-            <p className="text-slate-500 mt-1 text-sm">
-              Prices shown are specific to the selected buyer. Custom prices take
-              priority over default prices.
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-slate-900">Products</h1>
+          {buyerName && (
+            <p className="text-slate-500 text-sm mt-1">
+              Billing for:{" "}
+              <span className="text-blue-700 font-semibold">{buyerName}</span>
             </p>
-          </div>
-
-          <button
-            onClick={proceedToCheckout}
-            className="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
-          >
-            Cart ({totalCartItems}) → Checkout
-          </button>
+          )}
         </div>
 
-        {/* Products Grid */}
-        {products.length === 0 ? (
-          <p className="text-slate-500 text-center py-20">Loading products...</p>
-        ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {products.map((product) => (
-              <div
-                key={product.productId}
-                className="bg-white rounded-xl shadow p-6 border border-slate-100"
-              >
-                {/* Product name + badge */}
-                <div className="flex justify-between items-start mb-3">
-                  <h3 className="font-semibold text-slate-800 text-lg leading-tight">
-                    {product.productName}
-                  </h3>
-                  {product.hasCustomPrice && (
-                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded font-medium shrink-0 ml-2">
-                      Custom
+        <div className="flex gap-6 items-start">
+
+          {/* Product List */}
+          <div className="flex-1 bg-white rounded-xl shadow border border-slate-100 overflow-hidden">
+
+            <div className="grid grid-cols-12 text-xs font-semibold text-slate-500 uppercase tracking-wide px-6 py-3 bg-slate-50 border-b border-slate-100">
+              <span className="col-span-5">Product</span>
+              <span className="col-span-2 text-right">Rate</span>
+              <span className="col-span-3 text-center">Quantity</span>
+              <span className="col-span-2 text-center">Action</span>
+            </div>
+
+            {products.length === 0 ? (
+              <p className="text-center text-slate-400 py-16 text-sm">Loading products...</p>
+            ) : (
+              products.map((product, index) => (
+                <div
+                  key={product.productId}
+                  className={`grid grid-cols-12 items-center px-6 py-4 ${
+                    index !== products.length - 1 ? "border-b border-slate-100" : ""
+                  } ${
+                    selectedItems[product.productId] ? "bg-blue-50/40" : "hover:bg-slate-50"
+                  } transition-colors`}
+                >
+                  <div className="col-span-5">
+                    <p className="font-medium text-slate-800">{product.productName}</p>
+                    {product.hasCustomPrice && (
+                      <span className="text-xs text-blue-600 bg-blue-100 px-2 py-0.5 rounded mt-1 inline-block">
+                        Custom Price
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="col-span-2 text-right">
+                    <p className="font-semibold text-slate-800">₹ {product.rate}</p>
+                  </div>
+
+                  <div className="col-span-3 flex items-center justify-center gap-2">
+                    <button
+                      onClick={() => changeQty(product.productId, -1)}
+                      className="w-8 h-8 rounded-md border border-slate-300 text-slate-600 hover:bg-slate-100 font-bold transition-colors flex items-center justify-center text-lg leading-none"
+                    >
+                      −
+                    </button>
+                    <span className="w-8 text-center font-semibold text-slate-800 text-sm">
+                      {quantities[product.productId] || 1}
                     </span>
-                  )}
-                </div>
+                    <button
+                      onClick={() => changeQty(product.productId, 1)}
+                      className="w-8 h-8 rounded-md border border-slate-300 text-slate-600 hover:bg-slate-100 font-bold transition-colors flex items-center justify-center text-lg leading-none"
+                    >
+                      +
+                    </button>
+                  </div>
 
-                {/* Price */}
-                <p className="text-2xl font-bold text-blue-700 mb-5">
-                  ₹ {product.rate}
-                </p>
-
-                {/* Qty input + Add to Cart */}
-                <div className="flex items-center gap-3">
-                  <input
-                    type="number"
-                    min="1"
-                    placeholder="Qty"
-                    value={quantities[product.productId] || ""}
-                    onChange={(e) =>
-                      handleQuantityChange(product.productId, e.target.value)
-                    }
-                    className="w-20 border border-gray-300 rounded-lg p-2 text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  <button
-                    onClick={() => addToCart(product)}
-                    className="flex-1 bg-slate-900 hover:bg-slate-700 text-white py-2 rounded-lg font-medium transition-colors"
-                  >
-                    Add to Cart
-                  </button>
+                  <div className="col-span-2 flex justify-center">
+                    <button
+                      onClick={() => addProduct(product)}
+                      className="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                    >
+                      Add
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
-        )}
 
+          {/* Order Summary sidebar */}
+          <div className="w-72 shrink-0">
+            <div className="bg-white rounded-xl shadow border border-slate-100 p-5 sticky top-6">
+              <h2 className="font-bold text-slate-900 mb-4">Order Summary</h2>
+
+              {selectedList.length === 0 ? (
+                <p className="text-slate-400 text-sm text-center py-8">
+                  No items added yet
+                </p>
+              ) : (
+                <div className="space-y-3 mb-4 max-h-72 overflow-y-auto">
+                  {selectedList.map((item) => (
+                    <div key={item.productId} className="flex items-start justify-between text-sm">
+                      <div className="flex-1 pr-2">
+                        <p className="text-slate-700 font-medium leading-tight text-xs">
+                          {item.productName}
+                        </p>
+                        <p className="text-slate-400 text-xs mt-0.5">
+                          ₹ {item.rate} × {item.qty}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <p className="text-slate-800 font-semibold text-xs">
+                          ₹ {(item.rate * item.qty).toFixed(0)}
+                        </p>
+                        <button
+                          onClick={() => removeItem(item.productId)}
+                          className="text-red-400 hover:text-red-600 text-xs font-bold leading-none ml-1"
+                          title="Remove"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {selectedList.length > 0 && (
+                <div className="border-t border-slate-100 pt-3 mb-4 space-y-1.5">
+                  <div className="flex justify-between text-xs text-slate-500">
+                    <span>Subtotal</span>
+                    <span>₹ {subtotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-xs text-slate-500">
+                    <span>GST (5%)</span>
+                    <span>₹ {gst.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between font-bold text-slate-900 text-sm pt-1.5 border-t border-slate-100">
+                    <span>Total</span>
+                    <span>₹ {total.toFixed(2)}</span>
+                  </div>
+                </div>
+              )}
+
+              <button
+                onClick={proceedToCheckout}
+                disabled={selectedList.length === 0}
+                className="w-full bg-blue-700 hover:bg-blue-800 disabled:bg-slate-300 disabled:cursor-not-allowed text-white py-3 rounded-lg font-semibold text-sm transition-colors"
+              >
+                Proceed to Checkout →
+              </button>
+            </div>
+          </div>
+
+        </div>
       </div>
     </div>
   );

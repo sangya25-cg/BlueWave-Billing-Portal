@@ -49,12 +49,19 @@ namespace BlueWave_BP.API.Services.Implementation
                     .FirstOrDefaultAsync(x =>
                         x.BuyerId == invoiceDto.BuyerId &&
                         x.ProductId == item.ProductId);
-                if (buyerPrice == null)
+
+                var product = await _context.Products
+                    .FirstOrDefaultAsync(x => x.Id == item.ProductId);
+
+                if (product == null)
                 {
                     throw new Exception(
-                        $"Price not configured for Product Id {item.ProductId}");
+                        $"Product not found for Product Id {item.ProductId}");
                 }
-                var amount = buyerPrice.Rate * item.Qty;
+
+                var finalRate = buyerPrice?.Rate ?? product.DefaultPrice;
+
+                var amount = finalRate * item.Qty;
 
                 var gst = amount * 0.05m;
 
@@ -68,7 +75,7 @@ namespace BlueWave_BP.API.Services.Implementation
 
                     Qty = item.Qty,
 
-                    Rate = buyerPrice.Rate,
+                    Rate = finalRate,
 
                     Amount = amount,
 

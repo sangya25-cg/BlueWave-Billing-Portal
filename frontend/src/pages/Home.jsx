@@ -28,16 +28,17 @@ function Home() {
       return;
     }
 
+    const buyer = buyers.find((b) => String(b.id) === String(selectedBuyer));
     navigate("/products", {
       state: {
         buyerId: selectedBuyer,
+        buyerName: buyer?.partyName || "",
       },
     });
   };
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col">
-
       <Navbar />
 
       <section className="max-w-7xl mx-auto px-8 py-16 w-full">
@@ -51,15 +52,6 @@ function Home() {
             <h1 className="text-5xl font-bold text-slate-900 mb-4 leading-tight">
               BlueWave
             </h1>
-
-            <h2 className="text-xl font-semibold text-blue-700 mb-5">
-              Smart Billing for Sanitary Equipment
-            </h2>
-
-            <p className="text-slate-600 leading-relaxed mb-10">
-              Manage customers, products, customer-specific pricing,
-              GST calculations and invoice generation — all from one place.
-            </p>
 
             <div className="grid grid-cols-3 gap-4">
               <div className="bg-white rounded-xl shadow p-4 text-center border border-slate-100">
@@ -114,55 +106,6 @@ function Home() {
 
         </div>
       </section>
-
-
-      <section className="bg-white py-14 border-t border-slate-200">
-        <div className="max-w-7xl mx-auto px-8">
-
-          <h2 className="text-2xl font-bold text-slate-900 text-center mb-10">
-            How It Works
-          </h2>
-
-          <div className="grid md:grid-cols-3 gap-8 text-center">
-
-            <div>
-              <div className="w-12 h-12 bg-blue-700 text-white rounded-full flex items-center justify-center text-lg font-bold mx-auto mb-4">
-                1
-              </div>
-              <h3 className="font-semibold text-slate-800 mb-2">Select Customer</h3>
-              <p className="text-slate-500 text-sm">
-                Choose the buyer you want to create the invoice for.
-              </p>
-            </div>
-
-            <div>
-              <div className="w-12 h-12 bg-blue-700 text-white rounded-full flex items-center justify-center text-lg font-bold mx-auto mb-4">
-                2
-              </div>
-              <h3 className="font-semibold text-slate-800 mb-2">Add Products</h3>
-              <p className="text-slate-500 text-sm">
-                Browse products and add them to cart with the required quantity.
-              </p>
-            </div>
-
-            <div>
-              <div className="w-12 h-12 bg-blue-700 text-white rounded-full flex items-center justify-center text-lg font-bold mx-auto mb-4">
-                3
-              </div>
-              <h3 className="font-semibold text-slate-800 mb-2">Generate Invoice</h3>
-              <p className="text-slate-500 text-sm">
-                Review your cart, confirm GST totals, and generate the invoice.
-              </p>
-            </div>
-
-          </div>
-        </div>
-      </section>
-
-      <footer className="bg-slate-900 text-slate-400 text-center py-5 text-sm mt-auto">
-        © 2026 BlueWave Billing. All rights reserved.
-      </footer>
-
     </div>
   );
 }

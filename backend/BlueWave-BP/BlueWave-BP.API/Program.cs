@@ -35,6 +35,20 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+var shouldReseedSanitaryData = args.Any(arg =>
+    string.Equals(arg, "--reseed-sanitary-data", StringComparison.OrdinalIgnoreCase));
+
+if (shouldReseedSanitaryData)
+{
+    using var scope = app.Services.CreateScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var loggerFactory = scope.ServiceProvider.GetRequiredService<ILoggerFactory>();
+    var logger = loggerFactory.CreateLogger("SanitaryDataSeeder");
+
+    await SanitaryDataSeeder.ReseedAsync(dbContext, logger);
+    return;
+}
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {

@@ -1,36 +1,21 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { createInvoice } from "../services/invoiceService";
 import Navbar from "../components/Navbar";
 
 function Checkout() {
   const location = useLocation();
   const navigate = useNavigate();
   const buyerId = location.state?.buyerId;
+  const buyerName = location.state?.buyerName || "";
   const cart = location.state?.cart || [];
 
   const subtotal = cart.reduce((sum, item) => sum + item.rate * item.qty, 0);
   const gst = subtotal * 0.05;
   const total = subtotal + gst;
 
-  const handleGenerateInvoice = async () => {
-    try {
-      const invoicePayload = {
-        buyerId,
-        items: cart.map((item) => ({
-          productId: item.productId,
-          qty: item.qty,
-        })),
-      };
-
-      const response = await createInvoice(invoicePayload);
-
-      navigate("/invoice", {
-        state: { invoice: response },
-      });
-    } catch (error) {
-      console.error(error);
-      alert("Failed to generate invoice.");
-    }
+  const handleGenerateInvoice = () => {
+    navigate("/invoice", {
+      state: { buyerId, buyerName, cart },
+    });
   };
 
   return (
@@ -43,7 +28,10 @@ function Checkout() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-slate-900">Checkout</h1>
           <p className="text-slate-500 mt-1 text-sm">
-            Review your order before generating the invoice.
+            
+            {buyerName && (
+              <span> Billing for: <span className="text-blue-700 font-medium">{buyerName}</span></span>
+            )}
           </p>
         </div>
 
@@ -102,7 +90,7 @@ function Checkout() {
               onClick={handleGenerateInvoice}
               className="w-full mt-6 bg-blue-700 hover:bg-blue-800 text-white py-3 rounded-lg font-semibold transition-colors"
             >
-              Generate Invoice
+              Preview Invoice →
             </button>
 
             <button
