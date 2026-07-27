@@ -90,9 +90,8 @@ function Products() {
     <div className="min-h-screen bg-slate-100 flex flex-col">
       <Navbar />
 
-      <div className="max-w-7xl mx-auto px-8 py-8 w-full flex-1">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 w-full flex-1">
 
-        {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-slate-900">Products</h1>
           {buyerName && (
@@ -103,81 +102,10 @@ function Products() {
           )}
         </div>
 
-        <div className="flex gap-6 items-start">
+        <div className="flex flex-col xl:flex-row gap-6 items-stretch xl:items-start">
 
-          {/* Product List */}
-          <div className="flex-1 bg-white rounded-xl shadow border border-slate-100 overflow-hidden">
-
-            <div className="grid grid-cols-12 text-xs font-semibold text-slate-500 uppercase tracking-wide px-6 py-3 bg-slate-50 border-b border-slate-100">
-              <span className="col-span-5">Product</span>
-              <span className="col-span-2 text-right">Rate</span>
-              <span className="col-span-3 text-center">Quantity</span>
-              <span className="col-span-2 text-center">Action</span>
-            </div>
-
-            {products.length === 0 ? (
-              <p className="text-center text-slate-400 py-16 text-sm">Loading products...</p>
-            ) : (
-              products.map((product, index) => (
-                <div
-                  key={product.productId}
-                  className={`grid grid-cols-12 items-center px-6 py-4 ${
-                    index !== products.length - 1 ? "border-b border-slate-100" : ""
-                  } ${
-                    selectedItems[product.productId] ? "bg-blue-50/40" : "hover:bg-slate-50"
-                  } transition-colors`}
-                >
-                  <div className="col-span-5">
-                    <p className="font-medium text-slate-800">{product.productName}</p>
-                    {product.hasCustomPrice && (
-                      <span className="text-xs text-blue-600 bg-blue-100 px-2 py-0.5 rounded mt-1 inline-block">
-                        Custom Price
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="col-span-2 text-right">
-                    <p className="font-semibold text-slate-800">₹ {product.rate}</p>
-                  </div>
-
-                  <div className="col-span-3 flex items-center justify-center gap-2">
-                    <button
-                      onClick={() => changeQty(product.productId, -1)}
-                      className="w-8 h-8 rounded-md border border-slate-300 text-slate-600 hover:bg-slate-100 font-bold transition-colors flex items-center justify-center text-lg leading-none"
-                    >
-                      −
-                    </button>
-                    <input
-                      type="number"
-                      min="1"
-                      value={quantities[product.productId] ?? 1}
-                      onChange={(e) => setQty(product.productId, e.target.value)}
-                      className="w-14 h-8 text-center border border-slate-300 rounded-md text-sm font-semibold text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                    <button
-                      onClick={() => changeQty(product.productId, 1)}
-                      className="w-8 h-8 rounded-md border border-slate-300 text-slate-600 hover:bg-slate-100 font-bold transition-colors flex items-center justify-center text-lg leading-none"
-                    >
-                      +
-                    </button>
-                  </div>
-
-                  <div className="col-span-2 flex justify-center">
-                    <button
-                      onClick={() => addProduct(product)}
-                      className="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                    >
-                      Add
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-
-          {/* Order Summary sidebar */}
-          <div className="w-72 shrink-0">
-            <div className="bg-white rounded-xl shadow border border-slate-100 p-5 sticky top-6">
+          <div className="w-full xl:w-72 shrink-0 xl:order-2">
+            <div className="bg-white rounded-xl shadow border border-slate-100 p-5 xl:sticky xl:top-6">
               <h2 className="font-bold text-slate-900 mb-4">Order Summary</h2>
 
               {selectedList.length === 0 ? (
@@ -238,6 +166,120 @@ function Products() {
                 Proceed to Checkout →
               </button>
             </div>
+          </div>
+
+          <div className="flex-1 bg-white rounded-xl shadow border border-slate-100 overflow-hidden xl:order-1">
+
+            <div className="hidden md:grid grid-cols-12 text-xs font-semibold text-slate-500 uppercase tracking-wide px-6 py-3 bg-slate-50 border-b border-slate-100">
+              <span className="col-span-5">Product</span>
+              <span className="col-span-2 text-right">Rate</span>
+              <span className="col-span-3 text-center">Quantity</span>
+              <span className="col-span-2 text-center">Action</span>
+            </div>
+
+            {products.length === 0 ? (
+              <p className="text-center text-slate-400 py-16 text-sm">Loading products...</p>
+            ) : (
+              products.map((product, index) => (
+                <div
+                  key={product.productId}
+                  className={`px-4 md:px-6 py-4 ${
+                    index !== products.length - 1 ? "border-b border-slate-100" : ""
+                  } ${
+                    selectedItems[product.productId] ? "bg-blue-50/40" : "hover:bg-slate-50"
+                  } transition-colors`}
+                >
+                  <div className="md:hidden space-y-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-medium text-slate-800">{product.productName}</p>
+                        {product.hasCustomPrice && (
+                          <span className="text-xs text-blue-600 bg-blue-100 px-2 py-0.5 rounded mt-1 inline-block">
+                            Custom Price
+                          </span>
+                        )}
+                      </div>
+                      <p className="font-semibold text-slate-800 whitespace-nowrap">₹ {product.rate}</p>
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => changeQty(product.productId, -1)}
+                          className="w-8 h-8 rounded-md border border-slate-300 text-slate-600 hover:bg-slate-100 font-bold transition-colors flex items-center justify-center text-lg leading-none"
+                        >
+                          −
+                        </button>
+                        <input
+                          type="number"
+                          min="1"
+                          value={quantities[product.productId] ?? 1}
+                          onChange={(e) => setQty(product.productId, e.target.value)}
+                          className="w-16 h-8 text-center border border-slate-300 rounded-md text-sm font-semibold text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        />
+                        <button
+                          onClick={() => changeQty(product.productId, 1)}
+                          className="w-8 h-8 rounded-md border border-slate-300 text-slate-600 hover:bg-slate-100 font-bold transition-colors flex items-center justify-center text-lg leading-none"
+                        >
+                          +
+                        </button>
+                      </div>
+                      <button
+                        onClick={() => addProduct(product)}
+                        className="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                      >
+                        Add
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="hidden md:grid grid-cols-12 items-center">
+                    <div className="col-span-5">
+                      <p className="font-medium text-slate-800">{product.productName}</p>
+                      {product.hasCustomPrice && (
+                        <span className="text-xs text-blue-600 bg-blue-100 px-2 py-0.5 rounded mt-1 inline-block">
+                          Custom Price
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="col-span-2 text-right">
+                      <p className="font-semibold text-slate-800">₹ {product.rate}</p>
+                    </div>
+
+                    <div className="col-span-3 flex items-center justify-center gap-2">
+                      <button
+                        onClick={() => changeQty(product.productId, -1)}
+                        className="w-8 h-8 rounded-md border border-slate-300 text-slate-600 hover:bg-slate-100 font-bold transition-colors flex items-center justify-center text-lg leading-none"
+                      >
+                        −
+                      </button>
+                      <input
+                        type="number"
+                        min="1"
+                        value={quantities[product.productId] ?? 1}
+                        onChange={(e) => setQty(product.productId, e.target.value)}
+                        className="w-14 h-8 text-center border border-slate-300 rounded-md text-sm font-semibold text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                      <button
+                        onClick={() => changeQty(product.productId, 1)}
+                        className="w-8 h-8 rounded-md border border-slate-300 text-slate-600 hover:bg-slate-100 font-bold transition-colors flex items-center justify-center text-lg leading-none"
+                      >
+                        +
+                      </button>
+                    </div>
+
+                    <div className="col-span-2 flex justify-center">
+                      <button
+                        onClick={() => addProduct(product)}
+                        className="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                      >
+                        Add
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
 
         </div>

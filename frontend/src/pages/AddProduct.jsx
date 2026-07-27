@@ -57,8 +57,8 @@ function AddProduct() {
   return (
     <div className="min-h-screen bg-slate-100">
       <Navbar />
-      <div className="max-w-2xl mx-auto px-6 py-10">
-        <div className="bg-white rounded-xl border border-slate-200 shadow p-6">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+        <div className="bg-white rounded-xl border border-slate-200 shadow p-5 sm:p-6">
           <h1 className="text-2xl font-bold text-slate-900 mb-1">Add Product</h1>
           <p className="text-sm text-slate-500 mb-6">Simple product creation form.</p>
 

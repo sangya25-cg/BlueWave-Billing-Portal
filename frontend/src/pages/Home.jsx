@@ -45,19 +45,19 @@ function Home() {
     <div className="min-h-screen bg-slate-100 flex flex-col">
       <Navbar />
 
-      <section className="max-w-7xl mx-auto px-8 py-16 w-full">
-        <div className="grid md:grid-cols-2 gap-12 items-center">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16 w-full">
+        <div className="grid md:grid-cols-2 gap-8 lg:gap-12 items-center">
 
           <div>
             <p className="text-blue-600 font-semibold uppercase tracking-widest text-sm mb-3">
               Billing Portal
             </p>
 
-            <h1 className="text-5xl font-bold text-slate-900 mb-4 leading-tight">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-4 leading-tight">
               BlueWave
             </h1>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="bg-white rounded-xl shadow p-4 text-center border border-slate-100">
                 <h3 className="text-2xl font-bold text-blue-700">
                   {buyers.length > 0 ? buyers.length : "—"}
@@ -84,8 +84,8 @@ function Home() {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-xl p-8 border border-slate-100">
-            <h2 className="text-2xl font-bold text-slate-900 mb-1">Start Billing</h2>
+          <div className="bg-white rounded-2xl shadow-xl p-5 sm:p-8 border border-slate-100">
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-1">Start Billing</h2>
             <p className="text-slate-500 text-sm mb-6">
               Select a customer to begin generating an invoice.
             </p>

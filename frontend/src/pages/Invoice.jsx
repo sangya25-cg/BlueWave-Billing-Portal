@@ -385,7 +385,7 @@ function Invoice() {
         }
       `}</style>
 
-      <div className="no-print max-w-3xl mx-auto px-6 pt-6 pb-4 flex justify-between items-center">
+      <div className="no-print max-w-3xl mx-auto px-4 sm:px-6 pt-4 sm:pt-6 pb-4 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
         <button
           onClick={() => navigate(-1)}
           className="text-slate-500 hover:text-slate-700 text-sm flex items-center gap-1"
@@ -393,25 +393,25 @@ function Invoice() {
           ← Back to Checkout
         </button>
 
-        <div className="flex gap-3">
+        <div className="w-full sm:w-auto flex flex-col sm:flex-row gap-3">
           <button
             onClick={handleSave}
             disabled={saving || !!savedInvoice}
-            className="bg-green-600 hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-lg font-semibold text-sm transition-colors"
+            className="w-full sm:w-auto bg-green-600 hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-lg font-semibold text-sm transition-colors"
           >
             {saving ? "Saving..." : savedInvoice ? "Saved" : "Save Bill"}
           </button>
 
           <button
             onClick={handlePrintNoSignature}
-            className="bg-slate-700 hover:bg-slate-800 text-white px-5 py-2.5 rounded-lg font-semibold text-sm transition-colors"
+            className="w-full sm:w-auto bg-slate-700 hover:bg-slate-800 text-white px-5 py-2.5 rounded-lg font-semibold text-sm transition-colors"
           >
             Print Bill
           </button>
 
           <button
             onClick={handleDownloadWithSignature}
-            className="bg-blue-700 hover:bg-blue-800 text-white px-5 py-2.5 rounded-lg font-semibold text-sm transition-colors"
+            className="w-full sm:w-auto bg-blue-700 hover:bg-blue-800 text-white px-5 py-2.5 rounded-lg font-semibold text-sm transition-colors"
           >
             Download Bill
           </button>
@@ -419,7 +419,7 @@ function Invoice() {
       </div>
 
       {savedInvoice && (
-        <div className="no-print max-w-3xl mx-auto px-6 pb-2">
+        <div className="no-print max-w-3xl mx-auto px-4 sm:px-6 pb-2">
           <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-2.5 text-sm text-green-800 flex items-center gap-2">
             <span className="font-semibold">Bill saved.</span>
             <span>Invoice No: <strong>{savedInvoice.invoiceNo}</strong></span>
@@ -427,11 +427,11 @@ function Invoice() {
         </div>
       )}
 
-      <div className="max-w-3xl mx-auto px-6 pb-10">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 pb-10 overflow-x-auto">
         <div
           id="invoice-print-area"
           ref={invoiceRef}
-          className="bg-white shadow border border-black p-4 text-[10px] leading-tight"
+          className="bg-white shadow border border-black p-3 sm:p-4 text-[10px] leading-tight min-w-[720px]"
         >
           <div className="border border-black">
             <div className="grid grid-cols-12 border-b border-black">

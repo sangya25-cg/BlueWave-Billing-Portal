@@ -23,11 +23,10 @@ function Checkout() {
     <div className="min-h-screen bg-slate-100 flex flex-col">
       <Navbar />
 
-      <div className="max-w-4xl mx-auto px-8 py-10 w-full flex-1">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 w-full flex-1">
 
-        {/* Page Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900">Checkout</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Checkout</h1>
           <p className="text-slate-500 mt-1 text-sm">
             
             {buyerName && (
@@ -38,35 +37,44 @@ function Checkout() {
 
         <div className="grid md:grid-cols-3 gap-8 items-start">
 
-          {/* Cart Items — takes 2 cols */}
           <div className="md:col-span-2 bg-white rounded-xl shadow border border-slate-100">
 
-            {/* Table Header */}
-            <div className="grid grid-cols-4 text-sm font-semibold text-slate-500 uppercase tracking-wide px-6 py-4 border-b border-slate-100">
+            <div className="hidden sm:grid grid-cols-4 text-sm font-semibold text-slate-500 uppercase tracking-wide px-6 py-4 border-b border-slate-100">
               <span className="col-span-2">Product</span>
               <span className="text-center">Qty</span>
               <span className="text-right">Amount</span>
             </div>
 
-            {/* Cart Rows */}
             {cart.map((item, index) => (
               <div
                 key={index}
-                className="grid grid-cols-4 items-center px-6 py-4 border-b border-slate-50 last:border-b-0"
+                className="border-b border-slate-50 last:border-b-0 px-4 sm:px-6 py-4"
               >
-                <div className="col-span-2">
-                  <p className="font-medium text-slate-800">{item.productName}</p>
-                  <p className="text-sm text-slate-400">₹ {item.rate} per unit</p>
+                <div className="sm:hidden flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-medium text-slate-800">{item.productName}</p>
+                    <p className="text-sm text-slate-400">₹ {item.rate} per unit</p>
+                    <p className="text-sm text-slate-500 mt-1">Qty: {item.qty}</p>
+                  </div>
+                  <p className="text-right font-semibold text-slate-800 whitespace-nowrap">
+                    ₹ {(item.rate * item.qty).toFixed(2)}
+                  </p>
                 </div>
-                <p className="text-center text-slate-700">{item.qty}</p>
-                <p className="text-right font-semibold text-slate-800">
-                  ₹ {(item.rate * item.qty).toFixed(2)}
-                </p>
+
+                <div className="hidden sm:grid grid-cols-4 items-center">
+                  <div className="col-span-2">
+                    <p className="font-medium text-slate-800">{item.productName}</p>
+                    <p className="text-sm text-slate-400">₹ {item.rate} per unit</p>
+                  </div>
+                  <p className="text-center text-slate-700">{item.qty}</p>
+                  <p className="text-right font-semibold text-slate-800">
+                    ₹ {(item.rate * item.qty).toFixed(2)}
+                  </p>
+                </div>
               </div>
             ))}
           </div>
 
-          {/* Order Summary — 1 col */}
           <div className="bg-white rounded-xl shadow border border-slate-100 p-6">
             <h2 className="text-lg font-bold text-slate-900 mb-5">Order Summary</h2>
 
